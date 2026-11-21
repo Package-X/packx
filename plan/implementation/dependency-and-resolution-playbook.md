@@ -45,7 +45,7 @@ Upstream documentation:
 - [fs4](https://docs.rs/fs4/latest/fs4/): cross-platform file locking; current crate also exposes file allocation/space information.
 - [tempfile](https://docs.rs/tempfile/latest/tempfile/): temporary files and directories with RAII cleanup.
 - [zip](https://docs.rs/zip/latest/zip/): use ZipFile::enclosed_name() to reject archive paths escaping the extraction root.
-- [minisign-verify](https://docs.rs/minisign-verify/latest/minisign_verify/): verifies standard/pre-hashed Minisign signatures and supports streaming verification.
+- [minisign-verify](https://docs.rs/minisign-verify/latest/minisign_verify/): verifies standard/pre-hashed Minisign signatures and supports streaming verification. Its streaming verifier requires a pre-hashed signature; use a matching release-signing mode and add a test vector to prove signer/verifier compatibility.
 - [minisign](https://docs.rs/minisign/latest/minisign/): pure-Rust Minisign signing/verification; signing belongs in a protected release environment.
 - [semver::VersionReq](https://docs.rs/semver/latest/semver/struct.VersionReq.html): range parsing and matching.
 - [pubgrub](https://docs.rs/pubgrub/latest/pubgrub/): full version solver if future catalog dependencies need conflict explanations.
