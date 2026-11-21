@@ -1,42 +1,28 @@
-# PackageX (PackX) Engineering & Agent Ground Rules
+# PackageX (`packx`) Engineering & Agent Ground Rules
 
-Read this file before modifying specifications or implementation code in this repository.
+Read this file before modifying specifications or authoring implementation code in `PackageX`.
 
-## 1. Workflow discipline
+## 1. Workflow Discipline
+- **Planning vs. Implementation Separation:** Keep advance planning and spec edits strictly separate from `.rs` code implementation unless explicitly instructed to move into a coding phase.
+- **Keep `/plan/` Synchronized:** Whenever an architectural decision, binary layout, CLI flag, or exit code changes, update the corresponding specification in `/plan/` in the same change set.
 
-- **Planning vs. implementation:** Keep planning/specification edits separate from Rust implementation unless explicitly instructed to begin implementation.
-- **Plan synchronization:** Changes to CLI commands, package identities, lock formats, compatibility metadata or exit codes update the related plan in the same change.
-- **Repository boundaries:** PackX owns package management and Toolchain resolution. It must not absorb Engine project semantics or SDK writer implementations.
+## 2. Code Formatting & Style Standards
+- **Tab Indentation Only:** Always use literal TAB characters (`\t`) for all indentation across Rust, TOML, JSON, `.px`, `.pxs`, `.s.px`, and nested lists—never mix spaces and tabs.
+- **Onboarding Comments:** Every module, public function, struct, and non-trivial block must carry clear, concise inline comments explaining *what* it does and *why* so new contributors can onboard immediately.
+- **DRY & Modular Crates:** Keep workspace crates decoupled cleanly along the boundaries defined in `plan/architecture/overview.md`.
 
-## 2. Formatting and code quality
+## 3. Non-Negotiable Architectural Invariants
+1. **White-Label End-User Footprint:** Never leak `PackageX` or `px-` strings into end-user install directories, uninstaller paths (`%LOCALAPPDATA%\<package_name>\uninstaller\<app_id>.exe` or `%ProgramData%`), staging/backup temp folders, shell `$PATH` sentinel comments, or PE Version Resources.
+2. **Zero UAC on Inspection Flags:** Always stamp Windows PE stubs with `asInvoker`. Handle `elevate = true` via runtime self-elevation (`ShellExecuteW("runas")`) *only* after `-packagex-detail` and `--dry-run` are ruled out.
+3. **Signed PE Overlay Safety:** Never assume `PxFooter` lives at raw `EOF - 64` on Windows. Always inspect the PE Optional Header Certificate Table offset first (`cert_table_offset - 64`) so Authenticode signatures never break footer discovery.
+4. **Same-Volume Atomic Staging:** Always stage extracted files in a hidden sibling directory on the same filesystem/volume as `$instdir$`—never cross-volume from `$temp$`—so commit swaps stay atomic.
+5. **Standard `std` Rust + Audited Crate ASM:** Use standard `std` Rust (`opt-level = "z"`, LTO, `strip`) for `px-runtime` and `px-stub`. Rely on audited crate-level SIMD ASM (`blake3`, `sha2`, `zstd-rs`) rather than hand-rolled assembly stubs.
+6. **MPL-2.0 Vendoring Hygiene:** Any vendored macOS crates derived from [`indygreg/apple-platform-rs`](https://github.com/indygreg/apple-platform-rs) or its downstream forks must retain original copyright/MPL-2.0 headers and keep file-level modifications open under MPL-2.0.
 
-- Follow the formatting convention in the actual language/toolchain configuration.
-- Keep modules small with explicit responsibilities.
-- Document public APIs and non-obvious invariants.
-- Prefer deterministic, typed errors and testable state transitions.
-- Avoid dependencies that duplicate functionality already present in the runtime.
-
-## 3. Non-negotiable management invariants
-
-1. **Minimal installation:** Never install unrelated OS, architecture, format or optional components just because they are available in a catalog.
-2. **Immutable packages:** Verified CAS content is immutable. Repair replaces an object through staging; it never patches installed files in place.
-3. **Side-by-side coexistence:** Multiple Engine versions and Toolchains coexist without silently upgrading another project's pinned selection.
-4. **Lock before mutation:** Package-store, Toolchain and reference-index updates use the documented cross-process lock and atomic update protocol.
-5. **Verify before use:** Do not execute/load SDK binaries or register packages until signatures, full hashes, target identity and extraction safety pass.
-6. **Nightly identity:** Visible Nightly identity derives from the selected Git commit and uses an eight-hex prefix. Internal semantic version remains metadata. There is no Beta channel.
-7. **Offline honesty:** Offline/locked operations never access the network or substitute another package identity.
-8. **Runtime separation:** Developer Toolbelt SDK packages and end-user application runtimes (including Electron) are separate stores and lifecycle owners.
-9. **Explicit updates:** Updating installed packages and changing a project's pinned Toolchain are distinct operations.
-
-## 4. Planning-first implementation order
-
-When implementation begins, establish a working vertical slice:
-1. Permanent PackX shim and CLI routing.
-2. Toolbelt inventory, lock and atomic index updates.
-3. Signed catalog parsing and Engine/SDK compatibility resolution.
-4. Required installation for one supported target.
-5. CAS download, hash verification, atomic extraction and registration.
-6. Toolchain lock and side-by-side Engine routing.
-7. Offline .pxbelt export/import.
-8. Update, verify, repair, remove and safe garbage collection.
-9. Multi-target and Nightly expansion.
+## 4. Phase 1 MVP Vertical Slice (Build Order)
+When implementation begins, ship a working vertical slice before expanding to all 11 targets:
+1. `px-spec` (`.px` TOML parser, `<section>.<os>.<key>` step resolver, `packx check` linter).
+2. `px-toolbelt` + `px-shim` (blocking lockfile, CAS `sdk_index.json`, `--offline` diagnostics).
+3. `px-assembler` + `px-stub` (Windows PE overlay `.exe`, `zstd` deterministic packer, `goblin` signed-PE footer reader, `AttachConsole`, `-packagex-detail`, `--dry-run`, `packx test` Desktop sandbox).
+4. `px-runtime` + `px-script` (same-volume staging, rollback journal, `wasmi` `.s.px` Hook SDK, white-label uninstaller).
+5. Expand to `.msi`, `.dmg`, `.deb`, `AppImage`, WinLook `wl_ui`, and AEAD password sealing.
