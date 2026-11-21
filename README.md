@@ -40,6 +40,8 @@ A machine can have multiple Toolchains. Installing a newer SDK must not silently
 - [CAS, locks and offline bundles](plan/architecture/cas-and-offline.md)
 - [Toolbelt CLI specification](plan/specs/toolbelt-cli.md)
 - [Package download and trust model](plan/security/package-download-trust.md)
+- [Rust dependency and resolution playbook](plan/implementation/dependency-and-resolution-playbook.md)
+- [Package-store data model and crash recovery](plan/implementation/package-store-state-and-recovery.md)
 
 ## Related repositories
 

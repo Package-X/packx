@@ -64,8 +64,14 @@ The central Engine repository currently contains older packx belt examples. This
 | [CAS and offline](architecture/cas-and-offline.md) | Immutable content store, locking, atomic extraction, references and .pxbelt |
 | [Toolbelt CLI](specs/toolbelt-cli.md) | Commands, flags and user-visible semantics |
 | [Download trust](security/package-download-trust.md) | Signatures, hashes, archive safety, mirrors and recovery |
+| [Dependency/resolution playbook](implementation/dependency-and-resolution-playbook.md) | Candidate Rust crates, Engine handshake, dependency resolution, download/extract/register sequence and POC milestones |
+| [Package-store state/recovery](implementation/package-store-state-and-recovery.md) | Manifest/index/lock schemas, state machine, safe extraction, WAL-style registration, leases and crash testing |
 
-## 6. Installation invariants
+## 6. Implementation approach
+
+The dependency and resolution playbook specifies a concrete synchronous Rust-first implementation candidate (ureq, fs4, tempfile, serde, semver, Minisign verification and safe archive readers), explains why a full dependency solver is not initially required, and defines the Engine requirements handshake that prevents PackX from duplicating .px parsing. The package-store document defines proposed manifest/index/lock data, the download state machine, pre-scan extraction checks, crash-recoverable CAS registration and process leases. These are implementation plans, not existing code or locked dependency versions.
+
+## 7. Installation invariants
 
 1. Install only packages required by the selected Engine/project/target and declared dependency closure.
 2. Never install unrelated OS, architecture or format packages.
@@ -78,7 +84,7 @@ The central Engine repository currently contains older packx belt examples. This
 9. Stable is default; Nightly is always explicit.
 10. Offline mode never accesses the network.
 
-## 7. Release identity
+## 8. Release identity
 
 Stable examples:
 
@@ -96,7 +102,7 @@ px-stub-windows-x64@nightly.a1b2c3d4
 
 For Nightly, the eight-character commit prefix is the visible identity. Full SHA and internal semantic-version metadata remain in signed package metadata. No Beta channel exists.
 
-## 8. Open design decisions
+## 9. Open design decisions
 
 - Whether project-level Toolchain pins live in packx.lock, a project-local toolchain file, or both.
 - Exact root directory names and platform conventions.
