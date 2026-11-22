@@ -22,11 +22,11 @@ A machine can have multiple Toolchains. Installing a newer SDK must not silently
 
 ## Core behavior
 
-1. packx toolbelt install --required resolves what the selected Engine/project needs and installs only missing required packages and dependencies.
+1. `packx toolbelt install <package-id[@identity]>` installs a named package directly. Add `--required` to inspect the selected project through the Engine and automatically install its required SDK packages and dependencies.
 2. SDKs are installed as coherent target packages containing multiple compiled pieces, not as individual Rust crates.
 3. Compatibility comes from signed, machine-readable metadata, not guessed version arithmetic or usage telemetry.
 4. Stable uses semantic versions. Nightly uses an eight-character Git commit identity. There is no Beta channel.
-5. --nightly selects the latest published compatible Nightly; --nightly=<8char_commit> selects an exact snapshot. Nightly is never selected automatically.
+5. Stable is the default channel. `--nightly` explicitly selects Nightly and means the latest compatible snapshot when no commit is supplied; `--nightly=<8char_commit>` selects the exact GitHub commit prefix. Nightly is never chosen without an explicit channel request.
 6. Verified packages are immutable in CAS. Downloads are hash-checked, extracted atomically and reference-counted.
 7. Offline .pxbelt export/import supports air-gapped environments.
 8. Unrelated OSes, architectures, formats and optional components are not downloaded merely because they exist.
