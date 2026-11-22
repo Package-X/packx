@@ -2,13 +2,16 @@
 
 ## 1. User-facing objective
 
-The normal setup command is intentionally simple:
+`toolbelt install` supports direct package installation and project-aware dependency installation. `--required` is optional: it tells PackX to inspect the selected project through the Engine, discover the SDK packages and dependencies the project needs, and install that required closure. It is not required when the user names a package directly.
 
 ~~~powershell
+packx toolbelt install <package-id[@identity]>
+packx toolbelt install <package-id> --nightly
+packx toolbelt install <package-id> --nightly=a1b2c3d4
 packx toolbelt install --required
 ~~~
 
-PackX performs dependency analysis and installs only what the selected PackageX Engine/project needs. Developers should not have to select every writer crate or target component manually.
+PackX performs dependency analysis for the `--required` path and installs only what the selected PackageX Engine/project needs. Developers should not have to select every writer crate or target component manually.
 
 ## 2. Meaning of required
 
@@ -119,19 +122,20 @@ Show installed, reused, skipped and unresolved packages; selected Engine/SDK com
 
 ## 5. Nightly selection
 
-Stable is the default.
+Stable is the default. Nightly is opt-in; once selected, the default Nightly version is the latest compatible published snapshot.
 
 ~~~powershell
-packx toolbelt install --required
+packx toolbelt install <package-id> --nightly
+packx toolbelt install <package-id> --nightly=a1b2c3d4
 packx toolbelt install --required --nightly
 packx toolbelt install --required --nightly=a1b2c3d4
 ~~~
 
 Rules:
-- --nightly opts into latest published compatible Nightly.
-- --nightly=<8hex> resolves the exact commit prefix.
-- Full commit SHA is verified and stored.
-- Eight-character prefix identifies one immutable package snapshot.
+- --nightly without a value selects the latest published compatible Nightly for a named package, or the latest coherent compatible Nightly package set for the selected project.
+- --nightly=<8hex> resolves the exact eight-character commit prefix shown by GitHub.
+- The full commit SHA is verified and stored; the short prefix is a selector, not an integrity digest.
+- Eight-character prefix must resolve to one immutable package snapshot.
 - Missing/ambiguous prefix is a hard error. Never fall back to another Nightly or Stable.
 - Internal semantic version is metadata, not primary visible identity.
 - There is no Beta channel.
@@ -166,7 +170,8 @@ A normal package update must not rewrite a project's pinned Toolchain.
 
 ## 9. Acceptance criteria
 
-- [ ] install --required installs exact dependency closure only.
+- [ ] Direct install can install a named package without `--required`.
+- [ ] install --required discovers the project through Engine and installs the exact required dependency closure only.
 - [ ] Engine defines project requirements; PackX does not duplicate parser policy.
 - [ ] Host OS does not determine project target.
 - [ ] Verified packages are reused.
