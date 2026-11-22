@@ -25,7 +25,7 @@ The goal is to start with a small synchronous dependency set. PackX is primarily
 
 | Concern | Candidate | How PackX uses it | Notes / boundary |
 |---|---|---|---|
-| CLI parsing | clap | Parse toolbelt, toolchain, --required, --nightly, --offline, --locked, --project | Keep command parsing in the shim/CLI, not in Engine or SDK |
+| CLI parsing | clap | Parse direct package installs, project-aware --required resolution, --nightly, --offline, --locked, --project | Keep command parsing in the shim/CLI, not in Engine or SDK |
 | HTTP | ureq | Blocking HTTPS GET, response streaming, proxy and TLS handling | Low-overhead synchronous API; choose TLS backend deliberately |
 | JSON | serde + serde_json | Catalog, manifests, indexes, lockfiles and machine-readable Engine requirements | Validate schemas/unknown critical fields rather than blindly deserializing |
 | SemVer | semver | Parse Engine/SDK versions and test version requirements | Version ranges alone never establish feature compatibility |
@@ -131,15 +131,25 @@ It should contain immutable package identities and full hashes. It must not lock
 
 ---
 
-## 4. Required resolution: concrete call sequence
+## 4. Project-aware required resolution (`--required`): concrete call sequence
 
-The public command:
+`--required` is an optional project-aware mode of `toolbelt install`, not a prerequisite for installation. When the user already knows the package, PackX supports direct installation without `--required`:
+
+~~~powershell
+packx toolbelt install <package-id[@identity]>
+packx toolbelt install <package-id> --nightly
+packx toolbelt install <package-id> --nightly=a1b2c3d4
+~~~
+
+Use `--required` when PackX should inspect the selected project through the Engine, discover its required SDK packages and dependencies, and install that compatible closure:
 
 ~~~powershell
 packx toolbelt install --required
+packx toolbelt install --required --nightly
+packx toolbelt install --required --nightly=a1b2c3d4
 ~~~
 
-should run this pipeline. The key rule is that PackX does not parse the entire .px format a second time. The Engine is the authority for project requirements.
+The key rule is that PackX does not parse the entire .px format a second time. The Engine is the authority for project requirements.
 
 ### Step 1 — Find the project
 
@@ -323,11 +333,13 @@ Only then report installed and verified.
 
 ## 5. Stable and Nightly selection algorithm
 
-Stable is the default channel. Nightly is explicit. Beta does not exist.
+Stable is the default channel. Nightly is selected explicitly; once Nightly is selected, omitting a commit selector means latest compatible. Beta does not exist.
 
 ### CLI forms
 
 ~~~powershell
+packx toolbelt install <package-id> --nightly
+packx toolbelt install <package-id> --nightly=a1b2c3d4
 packx toolbelt install --required
 packx toolbelt install --required --nightly
 packx toolbelt install --required --nightly=a1b2c3d4
@@ -336,8 +348,8 @@ packx toolbelt install --required --nightly=a1b2c3d4
 ### Meaning
 
 - No Nightly flag: select Stable packages that satisfy pins/compatibility.
-- --nightly: use latest compatible Nightly snapshot available in the signed catalog.
-- --nightly=<8hex>: resolve the exact selected commit prefix. The package manifest contains the full repository commit and exact archive digest.
+- --nightly without a value: use the latest published compatible Nightly snapshot for the named package, or the latest coherent compatible Nightly set for a project-aware `--required` install.
+- --nightly=<8hex>: select the exact Nightly commit prefix shown by the GitHub commit; the package manifest contains the verified full repository commit and exact archive digest.
 - Internal semantic version stays in metadata and can appear in verbose information, but concise list/install/download identity is nightly.<8hex>.
 - No fallback from a missing Nightly prefix to another Nightly or Stable.
 - No silent mix of different Nightly source snapshots unless the catalog explicitly declares and tests the combination.
