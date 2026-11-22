@@ -10,7 +10,8 @@ packx
 │   ├── list
 │   ├── search <query>
 │   ├── info <package-id[@identity]>
-│   ├── install --required [--nightly[=<8hex_commit>]]
+│   ├── install <package-id[@identity]> [--nightly[=<8hex_commit>]]
+│   ├── install --required [--project <path>] [--nightly[=<8hex_commit>]]
 │   ├── update [--check] [--required]
 │   ├── pin <package-id>@<identity>
 │   ├── unpin <package-id>
@@ -30,10 +31,18 @@ packx
 
 This is a proposed command surface. Freeze it against the Engine CLI specification before implementation.
 
-## 2. Required installation
+## 2. Installation forms
+
+`--required` is optional. A user can install a named package directly without it:
 
 ~~~powershell
-packx toolbelt install --required
+packx toolbelt install <package-id[@identity]>
+~~~
+
+Use project-aware required resolution when PackX should inspect the project through the selected Engine and work out the required package/dependency set automatically:
+
+~~~powershell
+packx toolbelt install --required [--project <path>]
 ~~~
 
 Behavior:
@@ -51,18 +60,19 @@ Do not download unrelated OS/architecture/format packages, debug symbols or opti
 
 ## 3. Nightly selection
 
-Stable is default. Nightly is opt-in.
+Stable is default. Nightly is opt-in; after selecting Nightly, no commit selector means the latest published compatible snapshot.
 
 ~~~powershell
-packx toolbelt install --required
+packx toolbelt install <package-id> --nightly
+packx toolbelt install <package-id> --nightly=a1b2c3d4
 packx toolbelt install --required --nightly
 packx toolbelt install --required --nightly=a1b2c3d4
 ~~~
 
 Rules:
-- --nightly without a value selects latest published compatible Nightly, subject to coherent Toolchain policy.
-- --nightly=<8hex_commit> selects the exact snapshot.
-- Prefix is exactly eight hex characters; lookup is case-insensitive and display normalized lowercase.
+- --nightly without a value selects the latest published compatible Nightly for the named package, or the latest coherent compatible Nightly set for project-aware `--required` installation.
+- --nightly=<8hex_commit> selects the exact commit prefix shown by GitHub.
+- Prefix is exactly eight hexadecimal characters; lookup is case-insensitive and display normalized lowercase.
 - Full commit SHA is stored and checked against selected workflow source.
 - Missing/ambiguous prefix fails. Never fall back to another Nightly or Stable.
 - Visible identity is nightly.a1b2c3d4; internal semantic version is metadata.
@@ -148,7 +158,8 @@ The central Engine plan contains older packx belt examples. Canonical command is
 
 ## 11. Acceptance criteria
 
-- [ ] install --required installs only required dependency closure.
+- [ ] A named package can be installed directly without `--required`.
+- [ ] install --required discovers project requirements and installs only the required dependency closure.
 - [ ] Stable is default and Nightly is explicit.
 - [ ] --nightly=<8hex> resolves exactly and never falls back.
 - [ ] Beta is absent.
