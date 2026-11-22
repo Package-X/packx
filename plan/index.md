@@ -40,6 +40,9 @@ A Toolchain is not the entire installed Toolbelt. Several Toolchains can coexist
 
 ~~~powershell
 packx toolbelt list
+packx toolbelt install <package-id[@identity]>
+packx toolbelt install <package-id> --nightly
+packx toolbelt install <package-id> --nightly=a1b2c3d4
 packx toolbelt install --required
 packx toolbelt install --required --nightly
 packx toolbelt install --required --nightly=a1b2c3d4
@@ -81,7 +84,7 @@ The dependency and resolution playbook specifies a concrete synchronous Rust-fir
 6. Installed content is immutable.
 7. Preserve existing pinned Toolchains during upgrades.
 8. Support side-by-side Engine and SDK versions.
-9. Stable is default; Nightly is always explicit.
+9. Stable is default; Nightly must be selected explicitly, and an unqualified `--nightly` selects the latest compatible Nightly.
 10. Offline mode never accesses the network.
 
 ## 8. Release identity
@@ -106,7 +109,7 @@ For Nightly, the eight-character commit prefix is the visible identity. Full SHA
 
 - Whether project-level Toolchain pins live in packx.lock, a project-local toolchain file, or both.
 - Exact root directory names and platform conventions.
-- Whether install --required requires an explicit .px path when multiple projects are discoverable.
+- Whether `--required` should demand an explicit .px path when project discovery is ambiguous.
 - Whether --nightly=<8hex> applies to every required package built from one source commit or requires per-package resolution when commits differ.
 - How Engine upgrades interact with locked SDK packages.
 - Exact exit-code allocation, synchronized with the central Engine specification.
